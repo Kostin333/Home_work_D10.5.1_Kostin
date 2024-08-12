@@ -1,9 +1,12 @@
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.models import User, Group
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django_filters.views import FilterView
-
-from .forms import PostForm
-from .models import Post
+from django.shortcuts import render, redirect
+from .forms import PostForm, ProfileForm
+from .models import Post, BaseRegisterForm, Author
 from .filters import PostFilter
 
 
@@ -50,7 +53,7 @@ class PostSearch(FilterView):
         return context
 
 
-class PostCreate(CreateView):
+class PostCreate(PermissionRequiredMixin, CreateView):
     form_class = PostForm
     model = Post
     template_name = 'post_create.html'
@@ -63,17 +66,50 @@ class PostCreate(CreateView):
         return super().form_valid(form)
 
 
-class PostUpdate(UpdateView):
+class PostUpdate(PermissionRequiredMixin, UpdateView):
     form_class = PostForm
     model = Post
     template_name = 'post_edit.html'
 
 
-class PostDelete(DeleteView):
+class PostDelete(PermissionRequiredMixin, DeleteView):
     model = Post
     template_name = 'post_delete.html'
     success_url = reverse_lazy('post_list')
 
+
+
+class BaseRegisterView(CreateView):
+    model = User
+    form_class = BaseRegisterForm
+    success_url = '/'
+
+
+class IndexView(LoginRequiredMixin, TemplateView):
+    template_name = 'news/index.html'
+    # context_object_name = 'author_view'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_not_authors'] = not self.request.user.groups.filter(name='authors').exists()
+        return context
+
+
+class ProfileUpdate(LoginRequiredMixin, UpdateView):
+    template_name = 'profile_edit.html'
+    form_class = ProfileForm
+    model = Author
+    success_url = reverse_lazy('post_list')
+
+
+@login_required
+def upgrade_me(request):
+    user = request.user
+    authors_group = Group.objects.get(name='authors')
+    if not request.user.groups.filter(name='authors').exists():
+        authors_group.user_set.add(user)
+        Author.objects.create(user=user)
+    return redirect('/profile/')
 
 
 

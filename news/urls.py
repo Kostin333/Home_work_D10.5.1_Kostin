@@ -1,6 +1,10 @@
 from django.urls import path
-from .views import PostList, PostDetail, PostSearch, PostCreate, PostUpdate, PostDelete
+from django.contrib.auth.views import LoginView, LogoutView
+from django.urls import path
 
+from . import views
+from .views import PostList, PostDetail, PostSearch, PostCreate, PostUpdate, PostDelete, BaseRegisterView, IndexView, \
+    upgrade_me, ProfileUpdate
 urlpatterns = [
    path('news/', PostList.as_view(), name='post_list'),
    path('news/<int:id>/', PostDetail.as_view(), name='post_detail'),
@@ -11,4 +15,10 @@ urlpatterns = [
    path('articles/create/', PostCreate.as_view(), name='article_create'),
    path('articles/<int:pk>/edit/', PostUpdate.as_view(), name='article_edit'),
    path('articles/<int:pk>/delete/', PostDelete.as_view(), name='article_delete'),
+   path('login/', LoginView.as_view(template_name='login.html'), name='login'),
+   path('logout/', LogoutView.as_view(template_name='logout.html'), name='logout'),
+   path('signup/', BaseRegisterView.as_view(template_name='signup.html'), name='signup'),
+   path('profile/', IndexView.as_view()),
+   path('upgrade/', upgrade_me, name='upgrade'),
+   path('profile/<int:pk>/update/', ProfileUpdate.as_view(), name='profile_edit'),
 ]
