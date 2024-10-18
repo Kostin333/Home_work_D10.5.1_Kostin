@@ -24,4 +24,5 @@ urlpatterns = [
    # подключались к главному приложению с префиксом news/.
    path('news/', include('news.urls')),
    path('accounts/', include('allauth.urls')),
+   path('__debug__/', include("debug_toolbar.urls")),
 ]
